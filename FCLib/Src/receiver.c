@@ -8,11 +8,8 @@
 
 #include "main.h"
 #include <stdio.h>
+#include "peripherals.h"
 
-#define RC_TIM_CHANNEL TIM_CHANNEL_4
-
-#define RC_TIMER TIM5
-#define RC_TIM_HANDLE htim5
 
 extern TIM_HandleTypeDef RC_TIM_HANDLE;
 
@@ -48,10 +45,18 @@ void ProcessPPM () {
 
 	ppm_values[counter] = difference;
 	if (counter == 8) {
-		PrintPPM();
+		//PrintPPM();
 	}
 	counter = (counter + 1) % 9;
 
 }
 
+
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4)
+	{
+		ProcessPPM();
+	}
+}
 

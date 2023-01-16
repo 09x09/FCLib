@@ -8,45 +8,54 @@
 
 #include "main.h"
 #include "../Inc/motor.h"
+#include "../Inc/peripherals.h"
 
-extern TIM_HandleTypeDef htim1;
-//extern TIM_HandleTypeDef htim8;
-//extern uint32_t ppm_values[9];
+extern TIM_HandleTypeDef SERVO_TIM_HANDLE;
+extern TIM_HandleTypeDef MOTOR_TIM_HANDLE;
 
-void InitServo() {
-		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+
+void InitServo(uint8_t servo) {
+	if (servo == 1) {
+		HAL_TIM_PWM_Start(&SERVO_TIM_HANDLE, TIM_CHANNEL_1);
+	}
+
+	if (servo == 2) {
+		HAL_TIM_PWM_Start(&SERVO_TIM_HANDLE, TIM_CHANNEL_2);
+	}
 
 }
 
-//void InitMotor(uint8_t motor) {
-//	if (motor == 1) {
-//		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-//	}
-//
-//	if (motor == 2) {
-//		HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
-//	}
-//}
+void InitMotor(uint8_t motor) {
+	if (motor == 1) {
+		HAL_TIM_PWM_Start(&MOTOR_TIM_HANDLE, TIM_CHANNEL_1);
+	}
 
-void SetServoMicroseconds(uint16_t value) {
-	TIM1->CCR3 = value;
+	if (motor == 2) {
+		HAL_TIM_PWM_Start(&MOTOR_TIM_HANDLE, TIM_CHANNEL_4);
+	}
 }
 
-//void SetMotorMicroseconds(uint8_t motor, uint16_t value) {
-//	if (motor == 1) {
-//		TIM1->CCR1 = value;
-//	}
-//
-//	if (motor == 2) {
-//		TIM1->CCR4 = value;
-//	}
-//}
+void SetServoMicroseconds(uint8_t servo, uint16_t value) {
+	if (value <= 2000) {
+		if (servo == 1) {
+			SERVO_TIMER->CCR1 = value;
+		}
 
+		if (servo == 2) {
+			SERVO_TIMER->CCR2 = value;
+		}
+	}
+}
 
-//void ServoTest(uint8_t servo) {
-//	SetServoMicroseconds(servo, ppm_values[1]);
-//}
-//
-//void MotorTest(uint8_t motor) {
-//	SetMotorMicroseconds(motor, ppm_values[1]);
-//}
+void SetMotorMicroseconds(uint8_t motor, uint16_t value) {
+	if (value <= 2000) {
+		if (motor == 1) {
+			MOTOR_TIMER->CCR1 = value;
+		}
+
+		if (motor == 2) {
+			MOTOR_TIMER->CCR4 = value;
+		}
+	}
+}
+

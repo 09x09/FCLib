@@ -9,10 +9,11 @@
 #include "tof.h"
 #include "vl53l1_api.h"
 #include "main.h"
+#include "peripherals.h"
 
 
-extern I2C_HandleTypeDef hi2c3;
-VL53L1_Dev_t dev = {.i2c_slave_address = 0x52, .I2cHandle = &hi2c3};
+extern I2C_HandleTypeDef TOF_HANDLE;
+VL53L1_Dev_t dev = {.i2c_slave_address = 0x52, .I2cHandle = &TOF_HANDLE};
 VL53L1_DEV Dev = &dev;
 
 
@@ -27,6 +28,8 @@ void TOF_Disable() {
 	HAL_GPIO_WritePin(GPIOH, GPIO_PIN_3, GPIO_PIN_RESET);
 	HAL_Delay(1);
 }
+
+
 
 
 void TOF_Init () {

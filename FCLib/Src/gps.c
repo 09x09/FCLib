@@ -9,14 +9,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "gps.h"
-
-extern UART_HandleTypeDef huart8;
-extern DMA_HandleTypeDef hdma_uart8_rx;
+#include <math.h>
+#include "../Inc/gps.h"
+#include "../Inc/data_structs.h"
+#include "../Inc/peripherals.h"
 
 #define MAX_SENTENCE_LENGTH 82
 #define SENTENCE_COUNT 5
 #define MAX_NMEA_LENGTH MAX_SENTENCE_LENGTH*SENTENCE_COUNT
+
+extern UART_HandleTypeDef GPS_HANDLE;
+extern DMA_HandleTypeDef GPS_DMA_HANDLE;
 
 uint8_t callback_done_flag = 0;
 
@@ -25,21 +28,18 @@ char raw_msg[MAX_NMEA_LENGTH];
 
 GPSData data;
 
-void EnableGPS() {
+void GPS_EnableGPS() {
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
 	HAL_Delay(1);
 }
 
-void DisableGPS() {
+void GPS_DisableGPS() {
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
 	HAL_Delay(1);
 }
 
-#define GPS_OK 0;
-#define GPS_NO_CONNECTION 1;
-#define GPS_ERROR 2;
 
-uint8_t CheckGPSStatus (GPSData* g) {
+uint8_t GPS_CheckGPSStatus (GPSData* g) {
 	if (g->num_satellite == 0) {
 		return GPS_NO_CONNECTION;
 	}
@@ -51,27 +51,26 @@ uint8_t CheckGPSStatus (GPSData* g) {
 	return GPS_OK;
 }
 
-void GetNMEAmsg() {
-	HAL_UARTEx_ReceiveToIdle_DMA(&huart8, gps_buffer, MAX_NMEA_LENGTH);
-	__HAL_DMA_DISABLE_IT(&hdma_uart8_rx, DMA_IT_HT);
+void GPS_GetNMEAmsg() {
+	HAL_UARTEx_ReceiveToIdle_DMA(&GPS_HANDLE, gps_buffer, MAX_NMEA_LENGTH);
+	__HAL_DMA_DISABLE_IT(&GPS_DMA_HANDLE, DMA_IT_HT);
 }
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
 	memcpy(raw_msg, gps_buffer, Size);
 	callback_done_flag = 1;
-	HAL_UARTEx_ReceiveToIdle_DMA(&huart8, gps_buffer, MAX_NMEA_LENGTH);
-	__HAL_DMA_DISABLE_IT(&hdma_uart8_rx, DMA_IT_HT);
+	HAL_UARTEx_ReceiveToIdle_DMA(&GPS_HANDLE, gps_buffer, MAX_NMEA_LENGTH);
+	__HAL_DMA_DISABLE_IT(&GPS_DMA_HANDLE, DMA_IT_HT);
 }
 
 
-void PrintMsg() {
+void GPS_PrintMsg() {
 	while (!callback_done_flag) {
 
 	}
 
-	ParseMsg(&data);
-
+	GPS_ParseMsg(&data);
 	printf("Time: %f, Lat: %f%c, Long: %f%c, Alt: %f, Speed %f, Mag head: %f, True head: %f, num sat: %u, HDOP: %f \n", \
 			data.timestamp, data.latitude, data.ns[0], data.longitude, data.ew[0], data.msl_altitude, data.speed_kmh, data.mag_heading, data.true_heading, data.num_satellite, data.hdop);
 	callback_done_flag = 0;
@@ -89,19 +88,19 @@ const char vtg[4] = "VTG";
    (p))
 
 
-void ParseMsg (GPSData* d) {
+void GPS_ParseMsg (GPSData* d) {
 	char *curr_ptr;
 	curr_ptr = strtok(raw_msg, sentence_end);
 	while (curr_ptr != NULL){
 		if (strstr(curr_ptr, gga) != NULL) {
-			printf("%s ", curr_ptr);
-			ParseGGA(curr_ptr, d);
+			printf("%s\n ", curr_ptr);
+			GPS_ParseGGA(curr_ptr, d);
 			goto next_sentence;
 		}
 
 		if (strstr(curr_ptr, vtg) != NULL) {
 			printf("%s\n", curr_ptr);
-			ParseVTG(curr_ptr,d);
+			GPS_ParseVTG(curr_ptr,d);
 			goto next_sentence;
 		}
 
@@ -114,7 +113,7 @@ void ParseMsg (GPSData* d) {
 }
 
 
-void ParseGGA (char* s, GPSData* g) {
+void GPS_ParseGGA (char* s, GPSData* g) {
 	char gga_msg[100];
 	strcpy(gga_msg, s);
 
@@ -157,7 +156,7 @@ void ParseGGA (char* s, GPSData* g) {
 }
 
 
-void ParseVTG(char* s, GPSData* g) {
+void GPS_ParseVTG(char* s, GPSData* g) {
 	char vtg_msg[100];
 	strcpy(vtg_msg, s);
 
